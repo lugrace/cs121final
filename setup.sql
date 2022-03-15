@@ -55,7 +55,7 @@ CREATE TABLE products (
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
     FOREIGN KEY (aisle_id) REFERENCES aisles(aisle_id)
-        ON DELETE CASCADE 
+        -- ON DELETE CASCADE 
         ON UPDATE CASCADE
 );
 
