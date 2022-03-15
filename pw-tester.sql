@@ -16,3 +16,4 @@ SELECT authenticate('bowie', 'greetings'); -- Should return 0 (false)
 
 
 
+SELECT authenticate('t', 'tt');

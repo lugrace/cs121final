@@ -2,6 +2,9 @@
 -- [Grace Lu - glu@caltech.edu]
 -- [Jae Yoon Kim - jaeyoonk@caltech.edu]
 
+CREATE DATABASE final;
+USE final;
+
 -- DROP TABLE commands:
 DROP TABLE IF EXISTS user_orders;
 DROP TABLE IF EXISTS users;

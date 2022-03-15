@@ -2,11 +2,14 @@
 -- [Grace Lu - glu@caltech.edu]
 -- [Jae Yoon Kim - jaeyoonk@caltech.edu]
 """
+from fcntl import DN_DELETE
 import sys  # to print error messages to sys.stderr
 import mysql.connector
 # To get error codes from the connector, useful for user-friendly
 # error-handling
 import mysql.connector.errorcode as errorcode
+import time
+import getpass
 
 # Debugging flag to print errors when debugging that shouldn't be visible
 # to an actual client. Set to False when done testing.
@@ -29,7 +32,7 @@ def get_conn():
           # SHOW VARIABLES WHERE variable_name LIKE 'port';
           port='3306',
           password='adminpw',
-          database='shelterdb'
+          database='final'
         )
         print('Successfully connected.')
         return conn
@@ -72,10 +75,47 @@ def example_query():
             sys.stderr('An error occurred, give something useful for clients...')
 
 
-
 # ----------------------------------------------------------------------
 # Functions for Logging Users In
 # ----------------------------------------------------------------------
+
+def get_first_element(query):
+    """
+    Used for getting the first element of the first row of the query
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute(query)
+        response = cursor.fetchone()
+        if response and len(response) > 0:
+            return response[0]
+    except mysql.connector.Error as err:
+        if DEBUG:
+            sys.stderr(err)
+            sys.exit(1)
+        else:
+            sys.stderr('An error occurred, give something useful for clients...')
+
+def login():
+    """
+    Logs in the user with their appropriate permissions
+    """
+    username = input('Enter your username: ')
+    password = getpass.getpass('Enter your password: ')
+    
+    response = int(get_first_element(f'SELECT authenticate(\'{username}\', \'{password}\');'))
+    if response:
+        is_admin = int(get_first_element(f'SELECT check_admin(\'{username}\')'))
+        if is_admin:
+            print(f'Welcome Administrator {username}, it is {time.ctime(time.time())}')
+            show_admin_options()
+        else:
+            print(f'Welcome User {username}, it is {time.ctime(time.time())}')
+            show_options()
+    else:
+        print('Login Failed. Goodbye.')
+        sys.exit(1)
+
 
 
 # ----------------------------------------------------------------------
@@ -87,8 +127,7 @@ def show_options():
     viewing <x>, filtering results with a flag (e.g. -s to sort),
     sending a request to do <x>, etc.
     """
-    print('What would you like to do? ')
-    print('  (TODO: provide command-line options)')
+    print('What would you like to do? \n\n')
     print('  (x) - something nifty to do')
     print('  (x) - another nifty thing')
     print('  (x) - yet another nifty thing')
@@ -96,21 +135,22 @@ def show_options():
     print('  (q) - quit')
     print()
     ans = input('Enter an option: ').lower()
-    if ans == 'q':
-        quit_ui()
-    elif ans == '':
-        pass
+    match ans:
+        case 'q':
+            quit_ui()
+        case '':
+            pass
+        case _:
+            print(f'\'{ans}\' is an invalid option. Goodbye.')
+            quit_ui()
 
 
-# You may choose to support admin vs. client features in the same program, or
-# separate the two as different client and admin Python programs using the same
-# database.
 def show_admin_options():
     """
     Displays options specific for admins, such as adding new data <x>,
     modifying <x> based on a given id, removing <x>, etc.
     """
-    print('What would you like to do? ')
+    print('What would you like to do?\n\n')
     print('  (x) - something nifty for admins to do')
     print('  (x) - another nifty thing')
     print('  (x) - yet another nifty thing')
@@ -118,11 +158,15 @@ def show_admin_options():
     print('  (q) - quit')
     print()
     ans = input('Enter an option: ').lower()
-    if ans == 'q':
-        quit_ui()
-    elif ans == '':
-        pass
 
+    match ans:
+        case 'q':
+            quit_ui()
+        case '':
+            pass
+        case _:
+            print(f'\'{ans}\' is an invalid option. Goodbye.')
+            quit_ui()
 
 def quit_ui():
     """
@@ -132,11 +176,13 @@ def quit_ui():
     exit()
 
 
+
+
 def main():
     """
     Main function for starting things up.
     """
-    show_options()
+    login()
 
 
 if __name__ == '__main__':

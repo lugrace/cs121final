@@ -47,7 +47,14 @@ CREATE TABLE user_info (
     -- represented as 2 characters.  Thus, 256 / 8 * 2 = 64.
     -- We can use BINARY or CHAR here; BINARY simply has a different
     -- definition for comparison/sorting than CHAR.
-    password_hash BINARY(64) NOT NULL
+    password_hash BINARY(64) NOT NULL,
+    
+    -- is_admin is a bool variable that defaults to not an admin
+    -- an admin will have much higher level access than clients
+    -- admin can have access over all functionality as well as
+    -- updating/deleting privileges
+    -- clients can only view.
+    is_admin TINYINT NOT NULL DEFAULT 0
 );
 
 -- [Problem 1a]
@@ -63,7 +70,7 @@ BEGIN
     SET salt = make_salt(8);
     SET hashish = UNHEX(SHA2(CONCAT(`password`, salt), 256));
     
-    INSERT INTO user_info VALUES (new_username, salt, hashish);
+    INSERT INTO user_info VALUES (new_username, salt, hashish, 0);
 END !
 DELIMITER ;
 
@@ -74,8 +81,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS authenticate;
 DELIMITER !
 CREATE FUNCTION authenticate(username VARCHAR(20), password VARCHAR(20))
--- RETURNS TINYINT DETERMINISTIC
-RETURNS VARCHAR(256) DETERMINISTIC
+RETURNS TINYINT DETERMINISTIC
 BEGIN
     DECLARE salty CHAR(8);
     DECLARE hashish BINARY(64);
@@ -104,7 +110,6 @@ DELIMITER ;
 -- [Problem 1c]
 -- Add at least two users into your user_info table so that when we run this file,
 -- we will have examples users in the database.
-
 CALL sp_add_user('barackobama', 'BarackIsTheBest');
 CALL sp_add_user('rosenbaum', 'CIT4Lyfe');
 
@@ -112,6 +117,50 @@ SELECT authenticate('rosenbaum', 'CIT4Lyfe');
 SELECT authenticate('barackobama', 'BarackIsTheBest');
 SELECT authenticate('barackobama', 'Russianhacker');
 SELECT authenticate('tester', 'Russianhacker');
+
+
+-- [Adding admins]
+DROP PROCEDURE IF EXISTS sp_give_admin;
+DELIMITER !
+CREATE PROCEDURE sp_give_admin(inp_username VARCHAR(20))
+BEGIN
+    UPDATE user_info 
+    SET is_admin = 1
+    WHERE username = inp_username;
+END !
+DELIMITER ;
+-- admin
+CALL sp_add_user('a', 'aa');
+CALL sp_give_admin('a');
+-- client
+CALL sp_add_user('c', 'cc');
+
+-- [Checking if they are admin]
+
+DROP FUNCTION IF EXISTS check_admin;
+DELIMITER !
+CREATE FUNCTION check_admin(inp_username VARCHAR(20))
+RETURNS TINYINT DETERMINISTIC
+BEGIN
+    -- check if the username is in there
+    IF ((SELECT COUNT(*) 
+        FROM user_info
+        WHERE inp_username = user_info.username) = 1) THEN
+        
+        RETURN (SELECT is_admin 
+            FROM user_info 
+            WHERE username = inp_username);
+    END IF;
+    RETURN 0;
+    
+END !
+DELIMITER ;
+
+
+SELECT check_admin('a');
+SELECT check_admin('c');
+
+
 
 -- [Problem 1d]
 -- Optional: Create a procedure sp_change_password to generate a new salt and change the given
@@ -130,12 +179,6 @@ BEGIN
     WHERE username = input_username;
 END !
 DELIMITER ;
-
-
-
-
-
-
 
 
 
