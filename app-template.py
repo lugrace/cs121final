@@ -12,7 +12,7 @@ import getpass
 
 # Debugging flag to print errors when debugging that shouldn't be visible
 # to an actual client. Set to False when done testing.
-DEBUG = True
+DEBUG = False
 
 
 # ----------------------------------------------------------------------
