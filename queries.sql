@@ -63,12 +63,12 @@ WITH aisle_info AS (
     FROM orders NATURAL JOIN products NATURAL JOIN aisles
 ),
 popular_item_aisle_ct AS (
-    SELECT aisle_id, product_id, COUNT(*) AS product_ct 
+    SELECT aisle_id, aisle, product_id, product_name, COUNT(*) AS product_ct 
     FROM aisle_info 
     GROUP BY aisle_id, product_id
 ),
 popular_item_per_aisle AS (
-    SELECT aisle_id, product_id, most_pop_item_ct
+    SELECT aisle_id, aisle, product_id, product_name, most_pop_item_ct
     FROM (SELECT aisle_id, MAX(product_ct) AS most_pop_item_ct
     FROM popular_item_aisle_ct
     GROUP BY aisle_id) t1 NATURAL JOIN popular_item_aisle_ct
