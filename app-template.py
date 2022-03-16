@@ -324,7 +324,7 @@ def pop_item_per_aisle():
         else:
             sys.stderr.write('An error occurred, please contact the administrator.')
     print('Most popular item per aisle:')
-    clean_rows = clean(rows)
+    clean_rows, maxs = clean(rows)
     print('HEADER')
     print('-'*70)
     for row in clean_rows:
