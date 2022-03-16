@@ -107,4 +107,4 @@ CREATE TABLE user_orders (
 );
 
 -- Index
-CREATE INDEX order_day_idx ON orders (order_day_of_week);
+-- CREATE INDEX order_day_idx ON orders (order_day_of_week);

@@ -33,6 +33,7 @@ GROUP BY user_id;
 -- [Query 3]
 -- Number of returning customers, so basically customers
 -- that have placed more than one order
+-- This is related to Query 2 in the RA part. 
 WITH orders_per_customer AS (
     SELECT user_id, COUNT(order_id) AS num_orders_per_user 
     FROM (SELECT DISTINCT user_id, order_id
@@ -44,7 +45,8 @@ FROM orders_per_customer NATURAL JOIN users
 WHERE num_orders_per_user > 1;
 
 -- [Query 4]
--- Most popular aisles and most popular item in that aisle
+-- Most popular aisles and number of visits for that aisle
+-- This is related to Query 1 in the RA part. 
 WITH aisle_info AS (
     SELECT product_id, product_name, aisle_id, aisle
     FROM orders NATURAL JOIN products NATURAL JOIN aisles
