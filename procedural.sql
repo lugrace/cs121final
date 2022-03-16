@@ -62,8 +62,7 @@ DELIMITER ;
 
 -- SELECT unpopular(4);
 
-
--- [Procedure]
+-- [UDF 2]
 -- Procedure that returns both the number of orders a user has 
 -- and the average number of products in their orders
 -- We want this returned in a human readable format aka a string
@@ -101,8 +100,63 @@ END !
 DELIMITER ;
 
 -- CHECKING CODE
--- SELECT user_id, COUNT(*) FROM orders NATURAL JOIN user_orders GROUP BY user_id ORDER BY COUNT(*) DESC;
+-- SELECT user_id, COUNT(*) 
+-- FROM orders NATURAL JOIN user_orders 
+-- GROUP BY user_id 
+-- ORDER BY COUNT(*) DESC;
 -- SELECT user_order_behavior(56463);
+
+-- [Procedure]
+-- top 10 bought items get moved to a new aisle
+-- the store manager wants to group the top 10 most purchased
+-- item and put it into a new aisle.
+
+
+DROP PROCEDURE IF EXISTS move_top_ten;
+
+DELIMITER !
+CREATE PROCEDURE move_top_ten()
+BEGIN
+    DECLARE new_aisle_id BIGINT UNSIGNED;
+    -- add a new aisle
+    SET new_aisle_id = (SELECT MAX(aisle_id) + 1 
+                        FROM aisles);
+                        
+    INSERT INTO aisles VALUES(new_aisle_id, 'TOP TEN AISLE!!');
+    
+    -- move the ten
+    DROP TABLE IF EXISTS top_ten;
+
+    CREATE TEMPORARY TABLE top_ten    
+    SELECT product_id
+    FROM orders
+    GROUP BY product_id
+    ORDER BY COUNT(*) DESC
+    LIMIT 10;
+    
+    -- SET foreign_key_checks = 0;
+    UPDATE products
+    SET aisle_id = new_aisle_id
+    WHERE product_id IN (
+        SELECT product_id FROM top_ten
+        );
+    -- SET foreign_key_checks = 1;
+END !
+DELIMITER ;
+
+-- CHECKING CODE
+-- SELECT orders.product_id, COUNT(*), aisle_id
+-- FROM orders LEFT JOIN 
+--     products ON orders.product_id = products.product_id
+-- GROUP BY orders.product_id
+-- ORDER BY COUNT(*) DESC
+-- LIMIT 10;
+
+-- SELECT MAX(aisle_id)
+-- FROM aisles;
+
+-- CALL move_top_ten();
+
 
 
 -- [Trigger]

@@ -2,7 +2,6 @@
 -- [Grace Lu - glu@caltech.edu]
 -- [Jae Yoon Kim - jaeyoonk@caltech.edu]
 """
-from fcntl import DN_DELETE
 import sys  # to print error messages to sys.stderr
 import mysql.connector
 # To get error codes from the connector, useful for user-friendly
@@ -54,6 +53,61 @@ def get_conn():
 # ----------------------------------------------------------------------
 # Functions for Command-Line Options/Query Execution
 # ----------------------------------------------------------------------
+
+def new_user():
+    username = input('New User\'s username: ')
+    password = input('New User\'s password: ')
+    cursor = conn.cursor()
+    sql = 'CALL sp_add_user(\'%s\',\'%s\')' % (username, password)
+    try:
+        cursor.execute(sql)
+    except mysql.connector.Error as err:
+        if DEBUG:
+            sys.stderr(err)
+            sys.exit(1)
+        else:
+            sys.stderr('An error occurred, please try again.')
+    admin_status = input('Are they going to be an admin? (y) or (n)').lower()
+    match admin_status:
+        case 'y':
+            make_admin(username)
+        case 'n':
+            print('OK. Complete.')
+        case _:
+            print('Invalid Option. Please try again ')
+
+
+def make_admin(username = None):
+    if username is None:
+        username = input('User\'s username: ')
+    cursor = conn.cursor()
+    sql = 'CALL sp_give_admin(\'%s\')' % (username,)
+    try:
+        cursor.execute(sql)
+        print(f'Completed! {username} is an administrator!')
+        print('With great power, comes great responsibility. Use it wisely.')
+    except mysql.connector.Error as err:
+        if DEBUG:
+            sys.stderr(err)
+            sys.exit(1)
+        else:
+            sys.stderr('An error occurred, please try again.')
+    
+
+def check_admin():
+    username = input('User\'s username: ')
+    cursor = conn.cursor()
+    sql = 'SELECT check_admin(\'%s\')' % (username,)
+    is_admin = int(get_first_element(sql))
+    if is_admin:
+        print(f'{username} is an Administrator.')
+    else:
+        print(f'{username} is not an Administrator.')
+
+
+def 
+
+
 def example_query():
     param1 = ''
     cursor = conn.cursor()
@@ -103,9 +157,9 @@ def login():
     username = input('Enter your username: ')
     password = getpass.getpass('Enter your password: ')
     
-    response = int(get_first_element(f'SELECT authenticate(\'{username}\', \'{password}\');'))
+    response = int(get_first_element('SELECT authenticate(\'%s\', \'%s\');' % (username, password, )))
     if response:
-        is_admin = int(get_first_element(f'SELECT check_admin(\'{username}\')'))
+        is_admin = int(get_first_element('SELECT check_admin(\'%s\')' % (username, )))
         if is_admin:
             print(f'Welcome Administrator {username}, it is {time.ctime(time.time())}')
             show_admin_options()
@@ -127,22 +181,23 @@ def show_options():
     viewing <x>, filtering results with a flag (e.g. -s to sort),
     sending a request to do <x>, etc.
     """
-    print('What would you like to do? \n\n')
-    print('  (x) - something nifty to do')
-    print('  (x) - another nifty thing')
-    print('  (x) - yet another nifty thing')
-    print('  (x) - more nifty things!')
-    print('  (q) - quit')
-    print()
-    ans = input('Enter an option: ').lower()
-    match ans:
-        case 'q':
-            quit_ui()
-        case '':
-            pass
-        case _:
-            print(f'\'{ans}\' is an invalid option. Goodbye.')
-            quit_ui()
+    while True:
+        print('What would you like to do? \n\n')
+        print('  (ch)\t- Check if a user has administrator privileges.')
+        print('  (x) - another nifty thing')
+        print('  (x) - yet another nifty thing')
+        print('  (x) - more nifty things!')
+        print('  (q) - quit')
+        print()
+        ans = input('Enter an option: ').lower()
+        match ans:
+            case 'q':
+                quit_ui()
+            case 'ch':
+                check_admin()
+            case _:
+                print(f'\'{ans}\' is an invalid option. Goodbye.')
+                quit_ui()
 
 
 def show_admin_options():
@@ -150,32 +205,37 @@ def show_admin_options():
     Displays options specific for admins, such as adding new data <x>,
     modifying <x> based on a given id, removing <x>, etc.
     """
-    print('What would you like to do?\n\n')
-    print('  (x) - something nifty for admins to do')
-    print('  (x) - another nifty thing')
-    print('  (x) - yet another nifty thing')
-    print('  (x) - more nifty things!')
-    print('  (q) - quit')
-    print()
-    ans = input('Enter an option: ').lower()
 
-    match ans:
-        case 'q':
-            quit_ui()
-        case '':
-            pass
-        case _:
-            print(f'\'{ans}\' is an invalid option. Goodbye.')
-            quit_ui()
+    while True:
+        print('What would you like to do?\n\n')
+        print('  (nu)\t- Add a new user')
+        print('  (ma)\t- Make a user an administrator')
+        print('  (ch)\t- Check if a user has administrator privileges.')
+        print('  (x) - yet another nifty thing')
+        print('  (x) - more nifty things!')
+        print('  (q) - quit')
+        print()
+        ans = input('Enter an option: ').lower()
+
+        match ans:
+            case 'q':
+                quit_ui()
+            case 'nu':
+                new_user()
+            case 'ma':
+                make_admin()
+            case 'ch':
+                check_admin()
+            case _:
+                print(f'\'{ans}\' is an invalid option. Goodbye.')
+                quit_ui()
 
 def quit_ui():
     """
     Quits the program, printing a good bye message to the user.
     """
-    print('Good bye!')
+    print('Goodbye!')
     exit()
-
-
 
 
 def main():
